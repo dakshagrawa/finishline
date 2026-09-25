@@ -188,7 +188,10 @@ export default function GradeCalculator() {
     try {
       const response = await fetch(`${SCHOOLLOGY_API_ROOT}/gradebook`, { cache: "no-store" });
       const payload = await response.json();
-      if (!response.ok) throw new Error(typeof payload?.error === "string" ? payload.error : "Unable to load Schoology grades.");
+      if (!response.ok) {
+        if (response.status === 401) setSchoologyStatus({ state: "disconnected" });
+        throw new Error(typeof payload?.error === "string" ? payload.error : "Unable to load Schoology grades.");
+      }
       const parsed = parseGradebook(JSON.stringify(payload));
       const gradebookFromSchoology: Gradebook = { ...parsed, source: "schoology" };
       pendingFocus.current = "dashboard";
