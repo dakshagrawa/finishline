@@ -28,7 +28,7 @@
     "eslint-config-next": "^15.5.0",
     "jsdom": "^26.1.0",
     "playwright": "^1.63.0",
-    "tsx": "^4.23.6",
+    "tsx": "^4.23.15",
     "typescript": "^5.0.0"
   }
 }
