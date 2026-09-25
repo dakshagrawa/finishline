@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Tests, lint, typecheck, build, visual regression and audits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npx tsc --noEmit --incremental false
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:visual
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit --audit-level=high
