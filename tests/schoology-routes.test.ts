@@ -107,3 +107,29 @@ test("Schoology API responses disable caching and callbacks never expose tokens"
   assert.match(callback, /\/grades\?schoology=connected/);
   assert.doesNotMatch(callback, /access\.token|tokenSecret|oauth_token.*searchParams\.set/);
 });
+
+test("Schoology operations documentation records the official OAuth and reauthorization contract", async () => {
+  const operations = await read("SCHOOLOGY_INTEGRATION.md");
+  assert.match(operations, /three-legged OAuth 1\.0/i);
+  assert.match(operations, /HMAC-SHA1/i);
+  assert.match(operations, /fuhsd\.schoology\.com\/oauth\/request_token/i);
+  assert.match(operations, /fuhsd\.schoology\.com\/oauth\/authorize/i);
+  assert.match(operations, /fuhsd\.schoology\.com\/oauth\/access_token/i);
+  assert.match(operations, /401.*reauthor/i);
+  assert.match(operations, /Important OAuth\/API Authentication Update/i);
+});
+
+test("runbook distinguishes the registered base callback from each state-bearing callback", async () => {
+  const operations = await read("SCHOOLOGY_INTEGRATION.md");
+  assert.match(operations, /registered (?:production )?HTTPS base callback/i);
+  assert.match(operations, /appends a random `state` query parameter[^\n]*per-attempt callback/i);
+  assert.match(operations, /FUHSD[^\n]*accept[^\n]*exact constructed (?:callback )?URL[^\n]*before activation/i);
+  assert.doesNotMatch(operations, /the exact registered HTTPS callback(?:[,.;]|\s+a unique)/i);
+});
+
+test("runbook excludes student passwords but acknowledges server-held OAuth secrets", async () => {
+  const operations = await read("SCHOOLOGY_INTEGRATION.md");
+  assert.match(operations, /student Schoology\/SSO passwords never enter Finishline/i);
+  assert.match(operations, /server[^\n]*approved app credentials[^\n]*token secrets[^\n]*securely/i);
+  assert.doesNotMatch(operations, /credentials never enter Finishline/i);
+});

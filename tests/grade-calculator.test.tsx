@@ -146,6 +146,31 @@ test("authorized Schoology connection loads normalized grades into memory and ca
   assert.ok(await screen.findByRole("heading", { name: /private what-if grades/i }));
 });
 
+test("expired Schoology authorization offers explicit reconnect without retrying grade loading", async () => {
+  const requests: string[] = [];
+  globalThis.fetch = (async (input) => {
+    const url = String(input);
+    requests.push(url);
+    if (url.endsWith("/status")) return Response.json({ available: true, connected: true });
+    if (url.endsWith("/gradebook")) return Response.json(
+      { error: "Schoology authorization is unavailable or expired." },
+      { status: 401 },
+    );
+    return new Response(null, { status: 404 });
+  }) as typeof fetch;
+
+  render(React.createElement(GradeCalculator));
+  fireEvent.click(await screen.findByRole("button", { name: /load schoology grades/i }));
+
+  assert.match((await screen.findByRole("alert")).textContent ?? "", /unavailable or expired/i);
+  assert.ok(screen.getByRole("button", { name: /continue with schoology/i }));
+  assert.equal(screen.queryByRole("button", { name: /load schoology grades/i }), null);
+  assert.deepEqual(requests.map((url) => new URL(url, "http://localhost").pathname), [
+    "/api/integrations/schoology/status",
+    "/api/integrations/schoology/gradebook",
+  ]);
+});
+
 test("demo rejects an unrestorable final-zero weight, restores on remount, and manages focus", () => {
   render(React.createElement(GradeCalculator));
   fireEvent.click(screen.getByRole("button", { name: /explore demo/i }));
